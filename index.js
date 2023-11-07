@@ -60,13 +60,19 @@ async function run() {
       const result = await jobsCollection.findOne(query)
       res.send(result)
     })
+    app.delete('/myJobs/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await jobsCollection.deleteOne(query)
+      res.send(result)
+      console.log(id);
+    })
     app.patch('/update/:id', async (req, res) => {
 
       try {
         const id = req.params.id;
         const filter = { _id: new ObjectId(id) }
         const updateJob = req.body;
-        console.log(filter, updateJob);
         const update = {
           $set: {
             name:updateJob.name,
