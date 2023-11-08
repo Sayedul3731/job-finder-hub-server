@@ -39,27 +39,34 @@ async function run() {
 
     app.get('/allJobs', async (req, res) => {
       const user = req.query;
-      console.log(user.email);
       let query = {}
       if (user?.email) {
         query.email = user?.email
       }
-      console.log(query);
       const result = await jobsCollection.find(query).toArray()
       res.send(result)
     })
+
+    app.get('/appliedJobs', async(req, res) => {
+      const user = req.query;
+      const result = await appliedJobsCollection.find(user).toArray()
+      res.send(result)
+    })
+
     app.get('/allJobs/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await jobsCollection.findOne(query)
       res.send(result)
     })
+
     app.get('/update/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await jobsCollection.findOne(query)
       res.send(result)
     })
+
     app.delete('/myJobs/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
@@ -67,6 +74,7 @@ async function run() {
       res.send(result)
       console.log(id);
     })
+    
     app.patch('/update/:id', async (req, res) => {
 
       try {
