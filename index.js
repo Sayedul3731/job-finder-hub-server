@@ -27,45 +27,50 @@ const client = new MongoClient(uri, {
   }
 });
 
-const verifyToken = async(req, res, next) => {
-  const token = req.cookies?.token;
-  console.log('token in the middleware', token);
-  if(!token){
-    return res.status(401).send({message: 'unauthorized access'})
-  }
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if(err){
-      return res.status(401).send({message: 'unauthorized'})
-    }
-    console.log('value in the token ', decoded);
-    req.user = decoded;
-    next()
-  })
-}
+
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+    const verifyToken = async (req, res, next) => {
+      const token = req.cookies?.token;
+      console.log('token in the middleware', token);
+      if (!token) {
+        return res.status(401).send({ message: 'unauthorized access' })
+      }
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: 'unauthorized' })
+        }
+        console.log('value in the token ', decoded);
+        req.user = decoded;
+        next()
+      })
+    }
 
     const jobsCollection = client.db('jobDB').collection('jobs')
     const appliedJobsCollection = client.db('jobDB').collection('appliedJobs')
 
-    app.post('/jwt',verifyToken, async(req, res) => {
+    app.post('/jwt', async (req, res) => {
       const user = req.body;
       console.log(user);
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h'})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       res
-      .cookie('token', token, {
-        httpOnly: true,
-        secure: false
-      })
-      .send({success: true})
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: false
+        })
+        .send({ success: true })
     })
-    
 
-    app.post('/addAJob', async (req, res) => {
+
+    app.post('/addAJob', verifyToken, async (req, res) => {
       const newJob = req.body;
+      console.log('in the addAJob', req.body?.email , req.user.email);
+      if(req.body?.email !== req.user.email){
+        return res.status(403).send({ message: 'forbidden access' })
+      }
       const result = await jobsCollection.insertOne(newJob)
       res.send(result)
     })
@@ -80,10 +85,14 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/appliedJobs',verifyToken, async (req, res) => {
+    app.get('/appliedJobs', verifyToken, async (req, res) => {
       const user = req.query;
       console.log(user);
       console.log('user in the valid token', req.user);
+      console.log(req.query.email, req.user.email);
+      if (req.query.email !== req.user.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
       const result = await appliedJobsCollection.find(user).toArray()
       res.send(result)
     })
