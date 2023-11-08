@@ -1,6 +1,7 @@
 const express = require('express')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors')
+var jwt = require('jsonwebtoken');
 const app = express()
 require('dotenv').config()
 const port = process.env.PORT || 5000;
@@ -31,6 +32,14 @@ async function run() {
     const jobsCollection = client.db('jobDB').collection('jobs')
     const appliedJobsCollection = client.db('jobDB').collection('appliedJobs')
 
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const token = jwt.sign(user, 'secret', { expiresIn: '1h' })
+      console.log('token', token);
+    })
+    
+
     app.post('/addAJob', async (req, res) => {
       const newJob = req.body;
       const result = await jobsCollection.insertOne(newJob)
@@ -47,8 +56,9 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/appliedJobs', async(req, res) => {
+    app.get('/appliedJobs', async (req, res) => {
       const user = req.query;
+      console.log(user);
       const result = await appliedJobsCollection.find(user).toArray()
       res.send(result)
     })
@@ -67,14 +77,14 @@ async function run() {
       res.send(result)
     })
 
-    app.delete('/myJobs/:id', async(req, res) => {
+    app.delete('/myJobs/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const result = await jobsCollection.deleteOne(query)
       res.send(result)
       console.log(id);
     })
-    
+
     app.patch('/update/:id', async (req, res) => {
 
       try {
@@ -83,17 +93,17 @@ async function run() {
         const updateJob = req.body;
         const update = {
           $set: {
-            name:updateJob.name,
-            email:updateJob.email,
-            category:updateJob.category,
-            title:updateJob.title,
-            salary:updateJob.salary,
-            description:updateJob.description,
-            jobPostingDate:updateJob.jobPostingDate,
-            deadline:updateJob.deadline,
-            applicants:updateJob.applicants,
-            logo:updateJob.logo,
-            photo:updateJob.photo
+            name: updateJob.name,
+            email: updateJob.email,
+            category: updateJob.category,
+            title: updateJob.title,
+            salary: updateJob.salary,
+            description: updateJob.description,
+            jobPostingDate: updateJob.jobPostingDate,
+            deadline: updateJob.deadline,
+            applicants: updateJob.applicants,
+            logo: updateJob.logo,
+            photo: updateJob.photo
           }
         }
         const result = await jobsCollection.updateOne(filter, update)
@@ -104,17 +114,11 @@ async function run() {
       }
     })
 
-    app.post('/allJobs/:id', async (req, res) => {
+    app.post('/allJobs', async (req, res) => {
       const appliedJob = req.body;
       const result = await appliedJobsCollection.insertOne(appliedJob)
       res.send(result)
     })
-
-    // myJobs here 
-    // app.get('/myJobs', async(req, res) => {
-    // const query = req.body;
-    // console.log(query);
-    // })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
