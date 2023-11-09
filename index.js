@@ -51,6 +51,8 @@ async function run() {
 
     const jobsCollection = client.db('jobDB').collection('jobs')
     const appliedJobsCollection = client.db('jobDB').collection('appliedJobs')
+    const jobsByLocationCollection = client.db('jobDB').collection('jobsByLocation')
+    const recruitersCollection = client.db('jobDB').collection('recruiters')
 
     app.post('/jwt', async (req, res) => {
       const user = req.body;
@@ -64,6 +66,20 @@ async function run() {
         .send({ success: true })
     })
 
+    app.patch('/allJobs/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+
+      const updateDoc = {
+          $inc: {
+              applicants: 1,
+          },
+      };
+
+      const result = await jobsCollection.updateOne(filter, updateDoc);
+      res.send(result);
+  });
+
 
     app.post('/addAJob', verifyToken, async (req, res) => {
       const newJob = req.body;
@@ -72,6 +88,17 @@ async function run() {
         return res.status(403).send({ message: 'forbidden access' })
       }
       const result = await jobsCollection.insertOne(newJob)
+      res.send(result)
+    })
+
+    app.get('/jobsByLocation', async(req, res) => {
+     const cursor = jobsByLocationCollection.find()
+     const result = await cursor.toArray()
+      res.send(result)
+    })
+    app.get('/recruiters', async(req, res) => {
+     const cursor = recruitersCollection.find()
+     const result = await cursor.toArray()
       res.send(result)
     })
 
