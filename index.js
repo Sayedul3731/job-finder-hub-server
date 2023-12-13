@@ -66,12 +66,12 @@ async function run() {
       console.log(user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       res
-      .cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-      })
-      .send({ success: true })
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        })
+        .send({ success: true })
     })
 
 
@@ -110,7 +110,7 @@ async function run() {
       const result = await jobsCollection.findOne(query)
       res.send(result)
     })
-   
+
 
     // add Job here 
     app.post('/addAJob', verifyToken, async (req, res) => {
@@ -127,6 +127,16 @@ async function run() {
     // jobs by location 
     app.get('/jobsByLocation', async (req, res) => {
       const cursor = jobsByLocationCollection.find()
+      const result = await cursor.toArray()
+      res.send(result)
+    })
+    // Latest Jobs get
+    app.get('/latestJobs', async (req, res) => {
+      const numberOfDays = 7;
+      const currentDate = new Date();
+      const startDate = new Date(currentDate);
+      startDate.setDate(currentDate.getDate() - numberOfDays);
+      const cursor = jobsCollection.find({ jobPostingDate: { $gte: startDate.toISOString() } })
       const result = await cursor.toArray()
       res.send(result)
     })
